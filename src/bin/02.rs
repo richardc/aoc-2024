@@ -2,24 +2,20 @@ advent_of_code::solution!(2);
 use itertools::Itertools;
 
 fn none_repeating(record: &[u32]) -> bool {
-    record
-        .into_iter()
-        .tuple_windows()
-        .find(|(a, b)| a == b)
-        .is_none()
+    !record.iter().tuple_windows().any(|(a, b)| a == b)
 }
 
 fn is_ascending(record: &[u32]) -> bool {
-    record.into_iter().tuple_windows().all(|(a, b)| a > b)
+    record.iter().tuple_windows().all(|(a, b)| a > b)
 }
 
 fn is_descending(record: &[u32]) -> bool {
-    record.into_iter().tuple_windows().all(|(a, b)| a < b)
+    record.iter().tuple_windows().all(|(a, b)| a < b)
 }
 
 fn diff_at_most_3(record: &[u32]) -> bool {
     record
-        .into_iter()
+        .iter()
         .tuple_windows()
         .all(|(a, b)| a.abs_diff(*b) <= 3)
 }
