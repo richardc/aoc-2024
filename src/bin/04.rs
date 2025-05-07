@@ -34,8 +34,34 @@ pub fn part_one(input: &str) -> Option<usize> {
     Some(sum)
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
-    None
+fn find_x_mas(matrix: &Matrix<u8>, x: usize, y: usize) -> bool {
+    if x == 0 || y == 0 {
+        return false;
+    }
+    // MS          MS
+    // -1,-1       +1,-1
+    //        A
+    //        0,0
+    // SM          SM
+    // -1,+1       +1,+1
+    matrix.get((x, y)) == Some(&b'A')
+        && ((matrix.get((x - 1, y - 1)) == Some(&b'M')
+            && matrix.get((x + 1, y + 1)) == Some(&b'S'))
+            || (matrix.get((x - 1, y - 1)) == Some(&b'S')
+                && matrix.get((x + 1, y + 1)) == Some(&b'M')))
+        && ((matrix.get((x + 1, y - 1)) == Some(&b'M')
+            && matrix.get((x - 1, y + 1)) == Some(&b'S'))
+            || (matrix.get((x + 1, y - 1)) == Some(&b'S')
+                && matrix.get((x - 1, y + 1)) == Some(&b'M')))
+}
+
+pub fn part_two(input: &str) -> Option<usize> {
+    let matrix = Matrix::from_rows(input.lines().map(|l| l.bytes())).ok()?;
+    let count = matrix
+        .keys()
+        .filter(|&(x, y)| find_x_mas(&matrix, x, y))
+        .count();
+    Some(count)
 }
 
 #[cfg(test)]
@@ -51,6 +77,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(9));
     }
 }
