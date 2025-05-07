@@ -18,7 +18,7 @@ impl Rule {
         Self { before, after }
     }
 
-    fn failed(self: &Self, ordering: &[Page]) -> bool {
+    fn failed(&self, ordering: &[Page]) -> bool {
         if let Some(before_index) = ordering.iter().position(|e| e == &self.before) {
             if let Some(after_index) = ordering.iter().position(|e| e == &self.after) {
                 if before_index > after_index {
@@ -59,7 +59,7 @@ impl Puzzle {
         Self { rules, orders }
     }
 
-    fn calculate(self: &Self, order: &[Page]) -> Option<Page> {
+    fn calculate(&self, order: &[Page]) -> Option<Page> {
         if self.rules.iter().all(|r| !r.failed(order)) {
             let middle = order.len() / 2;
             return Some(order[middle]);
@@ -67,7 +67,7 @@ impl Puzzle {
         None
     }
 
-    fn answer(self: &Self) -> u32 {
+    fn answer(&self) -> u32 {
         self.orders.iter().filter_map(|o| self.calculate(o)).sum()
     }
 }
