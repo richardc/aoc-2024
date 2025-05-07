@@ -16,15 +16,14 @@ fn find_xmas_dr(m: &Matrix<u8>, x: usize, y: usize) -> bool {
 }
 
 fn count_xmas(m: &Matrix<u8>) -> usize {
-    let lr = m.keys().filter(|&(x, y)| find_xmas_lr(&m, x, y)).count();
-    let dr = m.keys().filter(|&(x, y)| find_xmas_dr(&m, x, y)).count();
+    let lr = m.keys().filter(|&(x, y)| find_xmas_lr(m, x, y)).count();
+    let dr = m.keys().filter(|&(x, y)| find_xmas_dr(m, x, y)).count();
     lr + dr
 }
 
 pub fn part_one(input: &str) -> Option<usize> {
     let matrix = Matrix::from_rows(input.lines().map(|l| l.bytes())).ok()?;
     let sum = (0..4)
-        .into_iter()
         .map(|r| {
             let mut matrix = matrix.clone();
             matrix.rotate_cw(r);
