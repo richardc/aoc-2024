@@ -3,7 +3,7 @@ use pathfinding::matrix::directions;
 use pathfinding::matrix::Matrix;
 use std::collections::HashSet;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Puzzle {
     maze: Matrix<u8>,
 }
@@ -39,7 +39,7 @@ impl Puzzle {
         None
     }
 
-    fn part_one(&mut self) -> usize {
+    fn part_one(&self) -> usize {
         let mut visited: HashSet<(usize, usize)> = HashSet::new();
         let (mut row, mut col, mut facing) = self.start();
         visited.insert((row, col));
@@ -51,15 +51,50 @@ impl Puzzle {
         }
         visited.len()
     }
+
+    fn possible_obstructions(&self) -> Vec<(usize, usize)> {
+        self.maze
+            .items()
+            .filter_map(|((r, c), v)| if v == &b'.' { Some((r, c)) } else { None })
+            .collect()
+    }
+
+    fn causes_loop(&self, row: usize, col: usize) -> bool {
+        let mut maze = self.clone();
+        if let Some(elem) = maze.maze.get_mut((row, col)) {
+            *elem = b'#';
+        }
+        let (mut row, mut col, mut facing) = maze.start();
+        let mut visited: HashSet<(usize, usize, usize)> = HashSet::new();
+        visited.insert((row, col, facing));
+        while let Some((new_row, new_col, new_facing)) = maze.step(row, col, facing) {
+            row = new_row;
+            col = new_col;
+            facing = new_facing;
+            if !visited.insert((row, col, facing)) {
+                // loop detected
+                return true;
+            };
+        }
+        false
+    }
+
+    fn part_two(&self) -> usize {
+        self.possible_obstructions()
+            .iter()
+            .filter(|(row, col)| self.causes_loop(*row, *col))
+            .count()
+    }
 }
 
 pub fn part_one(input: &str) -> Option<usize> {
-    let mut puzzle = Puzzle::from_str(input);
+    let puzzle = Puzzle::from_str(input);
     Some(puzzle.part_one())
 }
 
-pub fn part_two(_input: &str) -> Option<usize> {
-    None
+pub fn part_two(input: &str) -> Option<usize> {
+    let puzzle = Puzzle::from_str(input);
+    Some(puzzle.part_two())
 }
 
 #[cfg(test)]
@@ -75,6 +110,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(6));
     }
 }
