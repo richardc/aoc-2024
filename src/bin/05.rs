@@ -1,55 +1,35 @@
 advent_of_code::solution!(5);
 
+use std::collections::HashMap;
+use std::collections::HashSet;
+
 type Page = u32;
 
 #[derive(Debug)]
-struct Rule {
-    before: Page,
-    after: Page,
-}
-
-impl Rule {
-    fn from_str(input: &str) -> Self {
-        let Some((before, after)) = input.split_once('|') else {
-            todo!()
-        };
-        let before = before.parse().unwrap();
-        let after = after.parse().unwrap();
-        Self { before, after }
-    }
-
-    fn failed(&self, ordering: &[Page]) -> bool {
-        if let Some(before_index) = ordering.iter().position(|e| e == &self.before) {
-            if let Some(after_index) = ordering.iter().position(|e| e == &self.after) {
-                if before_index > after_index {
-                    return true;
-                }
-            }
-        }
-        false
-    }
-}
-
 struct Puzzle {
-    rules: Vec<Rule>,
+    rules: HashMap<Page, HashSet<Page>>,
     updates: Vec<Vec<Page>>,
 }
 
 impl Puzzle {
     fn from_str(input: &str) -> Self {
-        let mut rules = Vec::new();
+        let mut rules: HashMap<Page, HashSet<Page>> = HashMap::new();
         let mut updates = Vec::new();
-        let mut parsing_orders = false;
+        let mut parsing_updates = false;
 
         for line in input.lines() {
             if line.is_empty() {
-                parsing_orders = true;
+                parsing_updates = true;
                 continue;
             }
 
-            if !parsing_orders {
-                let rule = Rule::from_str(line);
-                rules.push(rule);
+            if !parsing_updates {
+                let Some((before, after)) = line.split_once('|') else {
+                    todo!()
+                };
+                let before = before.parse().unwrap();
+                let after = after.parse().unwrap();
+                rules.entry(before).or_default().insert(after);
             } else {
                 let update = line.split(',').map(|o| o.parse().unwrap()).collect();
                 updates.push(update);
@@ -59,15 +39,25 @@ impl Puzzle {
         Self { rules, updates }
     }
 
-    fn midpoint_of_correct_update(&self, order: &[Page]) -> Option<Page> {
-        if self.rules.iter().all(|r| !r.failed(order)) {
-            let middle = order.len() / 2;
-            return Some(order[middle]);
+    fn update_is_sorted(&self, update: &[Page]) -> bool {
+        update.is_sorted_by(|a, b| {
+            if let Some(after) = self.rules.get(a) {
+                after.contains(b)
+            } else {
+                false
+            }
+        })
+    }
+
+    fn midpoint_of_correct_update(&self, update: &[Page]) -> Option<Page> {
+        if self.update_is_sorted(update) {
+            let middle = update.len() / 2;
+            return Some(update[middle]);
         }
         None
     }
 
-    fn answer(&self) -> u32 {
+    fn part_one(&self) -> u32 {
         self.updates
             .iter()
             .filter_map(|o| self.midpoint_of_correct_update(o))
@@ -75,31 +65,9 @@ impl Puzzle {
     }
 }
 
-#[cfg(test)]
-mod rule_tests {
-    use super::*;
-    #[test]
-    fn test_rule_failed_no_match() {
-        let rule = Rule::from_str("47|53");
-        assert!(!rule.failed(&vec![47, 32]))
-    }
-
-    #[test]
-    fn test_rule_failed_in_order() {
-        let rule = Rule::from_str("47|53");
-        assert!(!rule.failed(&vec![47, 53]))
-    }
-
-    #[test]
-    fn test_rule_failed_out_of_order() {
-        let rule = Rule::from_str("47|53");
-        assert!(rule.failed(&vec![53, 47]))
-    }
-}
-
 pub fn part_one(input: &str) -> Option<u32> {
     let puzzle = Puzzle::from_str(input);
-    Some(puzzle.answer())
+    Some(puzzle.part_one())
 }
 
 pub fn part_two(_input: &str) -> Option<u32> {
