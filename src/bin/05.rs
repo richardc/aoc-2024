@@ -32,13 +32,13 @@ impl Rule {
 
 struct Puzzle {
     rules: Vec<Rule>,
-    orders: Vec<Vec<Page>>,
+    updates: Vec<Vec<Page>>,
 }
 
 impl Puzzle {
     fn from_str(input: &str) -> Self {
         let mut rules = Vec::new();
-        let mut orders = Vec::new();
+        let mut updates = Vec::new();
         let mut parsing_orders = false;
 
         for line in input.lines() {
@@ -51,12 +51,12 @@ impl Puzzle {
                 let rule = Rule::from_str(line);
                 rules.push(rule);
             } else {
-                let order = line.split(',').map(|o| o.parse().unwrap()).collect();
-                orders.push(order);
+                let update = line.split(',').map(|o| o.parse().unwrap()).collect();
+                updates.push(update);
             }
         }
 
-        Self { rules, orders }
+        Self { rules, updates }
     }
 
     fn calculate(&self, order: &[Page]) -> Option<Page> {
@@ -68,7 +68,7 @@ impl Puzzle {
     }
 
     fn answer(&self) -> u32 {
-        self.orders.iter().filter_map(|o| self.calculate(o)).sum()
+        self.updates.iter().filter_map(|o| self.calculate(o)).sum()
     }
 }
 
