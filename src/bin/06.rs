@@ -47,6 +47,7 @@ impl Puzzle {
 
     fn part_one(&mut self) -> usize {
         let mut visited: HashSet<(usize, usize)> = HashSet::new();
+        visited.insert((self.row, self.col));
         while let Some((r, c)) = self.step() {
             visited.insert((r, c));
         }
