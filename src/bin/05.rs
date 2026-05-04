@@ -1,5 +1,6 @@
 advent_of_code::solution!(5);
 
+use itertools::Itertools;
 use std::collections::HashMap;
 use std::collections::HashSet;
 
@@ -63,6 +64,35 @@ impl Puzzle {
             .filter_map(|o| self.midpoint_of_correct_update(o))
             .sum()
     }
+
+    fn midpoint_of_corrected_update(&self, update: &[Page]) -> Option<Page> {
+        if !self.update_is_sorted(update) {
+            let update: Vec<_> = update
+                .iter()
+                .sorted_by(|a, b| {
+                    if let Some(after) = self.rules.get(a) {
+                        if after.contains(b) {
+                            std::cmp::Ordering::Less
+                        } else {
+                            std::cmp::Ordering::Equal
+                        }
+                    } else {
+                        std::cmp::Ordering::Equal
+                    }
+                })
+                .collect();
+            let middle = update.len() / 2;
+            return Some(*update[middle]);
+        }
+        None
+    }
+
+    fn part_two(&self) -> u32 {
+        self.updates
+            .iter()
+            .filter_map(|u| self.midpoint_of_corrected_update(u))
+            .sum()
+    }
 }
 
 pub fn part_one(input: &str) -> Option<u32> {
@@ -70,8 +100,9 @@ pub fn part_one(input: &str) -> Option<u32> {
     Some(puzzle.part_one())
 }
 
-pub fn part_two(_input: &str) -> Option<u32> {
-    None
+pub fn part_two(input: &str) -> Option<u32> {
+    let puzzle = Puzzle::from_str(input);
+    Some(puzzle.part_two())
 }
 
 #[cfg(test)]
@@ -87,6 +118,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(123));
     }
 }
