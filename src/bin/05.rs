@@ -1,20 +1,19 @@
 advent_of_code::solution!(5);
 
 use itertools::Itertools;
-use std::collections::HashMap;
 use std::collections::HashSet;
 
 type Page = u32;
 
 #[derive(Debug)]
 struct Puzzle {
-    rules: HashMap<Page, HashSet<Page>>,
+    rules: HashSet<(Page, Page)>,
     updates: Vec<Vec<Page>>,
 }
 
 impl Puzzle {
     fn from_str(input: &str) -> Self {
-        let mut rules: HashMap<Page, HashSet<Page>> = HashMap::new();
+        let mut rules: HashSet<(Page, Page)> = HashSet::new();
         let mut updates = Vec::new();
         let mut parsing_updates = false;
 
@@ -30,7 +29,7 @@ impl Puzzle {
                 };
                 let before = before.parse().unwrap();
                 let after = after.parse().unwrap();
-                rules.entry(before).or_default().insert(after);
+                rules.insert((before, after));
             } else {
                 let update = line.split(',').map(|o| o.parse().unwrap()).collect();
                 updates.push(update);
@@ -41,13 +40,7 @@ impl Puzzle {
     }
 
     fn update_is_sorted(&self, update: &[Page]) -> bool {
-        update.is_sorted_by(|a, b| {
-            if let Some(after) = self.rules.get(a) {
-                after.contains(b)
-            } else {
-                false
-            }
-        })
+        update.is_sorted_by(|a, b| self.rules.contains(&(*a, *b)))
     }
 
     fn midpoint_of_correct_update(&self, update: &[Page]) -> Option<Page> {
@@ -70,12 +63,8 @@ impl Puzzle {
             let update: Vec<_> = update
                 .iter()
                 .sorted_by(|a, b| {
-                    if let Some(after) = self.rules.get(a) {
-                        if after.contains(b) {
-                            std::cmp::Ordering::Less
-                        } else {
-                            std::cmp::Ordering::Equal
-                        }
+                    if self.rules.contains(&(**a, **b)) {
+                        std::cmp::Ordering::Less
                     } else {
                         std::cmp::Ordering::Equal
                     }
