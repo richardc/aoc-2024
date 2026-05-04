@@ -59,7 +59,7 @@ impl Puzzle {
         Self { rules, updates }
     }
 
-    fn calculate(&self, order: &[Page]) -> Option<Page> {
+    fn midpoint_of_correct_update(&self, order: &[Page]) -> Option<Page> {
         if self.rules.iter().all(|r| !r.failed(order)) {
             let middle = order.len() / 2;
             return Some(order[middle]);
@@ -68,7 +68,10 @@ impl Puzzle {
     }
 
     fn answer(&self) -> u32 {
-        self.updates.iter().filter_map(|o| self.calculate(o)).sum()
+        self.updates
+            .iter()
+            .filter_map(|o| self.midpoint_of_correct_update(o))
+            .sum()
     }
 }
 
