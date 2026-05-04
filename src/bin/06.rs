@@ -39,7 +39,7 @@ impl Puzzle {
         None
     }
 
-    fn part_one(&self) -> usize {
+    fn visited_cells(&self) -> HashSet<(usize, usize)> {
         let mut visited: HashSet<(usize, usize)> = HashSet::new();
         let (mut row, mut col, mut facing) = self.start();
         visited.insert((row, col));
@@ -49,14 +49,11 @@ impl Puzzle {
             facing = new_facing;
             visited.insert((row, col));
         }
-        visited.len()
+        visited
     }
 
-    fn possible_obstructions(&self) -> Vec<(usize, usize)> {
-        self.maze
-            .items()
-            .filter_map(|((r, c), v)| if v == &b'.' { Some((r, c)) } else { None })
-            .collect()
+    fn part_one(&self) -> usize {
+        self.visited_cells().len()
     }
 
     fn causes_loop(&self, row: usize, col: usize) -> bool {
@@ -77,6 +74,14 @@ impl Puzzle {
             };
         }
         false
+    }
+
+    fn possible_obstructions(&self) -> Vec<(usize, usize)> {
+        let (start_row, start_col, _) = self.start();
+        self.visited_cells()
+            .into_iter()
+            .filter(|(row, col)| (row, col) != (&start_row, &start_col))
+            .collect()
     }
 
     fn part_two(&self) -> usize {
