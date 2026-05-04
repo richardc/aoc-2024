@@ -6,40 +6,34 @@ use std::collections::HashSet;
 #[derive(Debug)]
 struct Puzzle {
     maze: Matrix<u8>,
-    row: usize,
-    col: usize,
-    facing: usize,
 }
 
 impl Puzzle {
     fn from_str(input: &str) -> Self {
         let maze = Matrix::from_rows(input.lines().map(|l| l.bytes())).unwrap();
-        let ((row, col), _) = maze.items().find(|((_, _), v)| **v == b'^').unwrap();
+        Self { maze }
+    }
+
+    fn start(&self) -> (usize, usize, usize) {
+        let ((row, col), _) = self.maze.items().find(|((_, _), v)| **v == b'^').unwrap();
         let facing = directions::DIRECTIONS_4
             .iter()
             .position(|&d| d == directions::N)
             .expect("N is a direction");
-        Self {
-            maze,
-            row,
-            col,
-            facing,
-        }
+        (row, col, facing)
     }
 
-    fn step(&mut self) -> Option<(usize, usize)> {
+    fn step(&self, row: usize, col: usize, facing: usize) -> Option<(usize, usize, usize)> {
         if let Some((new_row, new_col)) = self
             .maze
-            .move_in_direction((self.row, self.col), directions::DIRECTIONS_4[self.facing])
+            .move_in_direction((row, col), directions::DIRECTIONS_4[facing])
         {
             if self.maze.get((new_row, new_col)) == Some(&b'#') {
                 // Don't move, but turn
-                self.facing = (self.facing + 1) % 4;
-                return Some((self.row, self.col));
+                let new_facing = (facing + 1) % 4;
+                return Some((row, col, new_facing));
             } else {
-                self.row = new_row;
-                self.col = new_col;
-                return Some((new_row, new_col));
+                return Some((new_row, new_col, facing));
             }
         }
         None
@@ -47,9 +41,13 @@ impl Puzzle {
 
     fn part_one(&mut self) -> usize {
         let mut visited: HashSet<(usize, usize)> = HashSet::new();
-        visited.insert((self.row, self.col));
-        while let Some((r, c)) = self.step() {
-            visited.insert((r, c));
+        let (mut row, mut col, mut facing) = self.start();
+        visited.insert((row, col));
+        while let Some((new_row, new_col, new_facing)) = self.step(row, col, facing) {
+            row = new_row;
+            col = new_col;
+            facing = new_facing;
+            visited.insert((row, col));
         }
         visited.len()
     }
