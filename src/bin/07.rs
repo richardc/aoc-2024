@@ -52,8 +52,9 @@ impl Equation {
                     1 => sum += self.values[i],
                     2 => sum *= self.values[i],
                     3 => {
-                        let new = format!("{}{}", sum, self.values[i]);
-                        sum = new.parse().unwrap()
+                        let digits = self.values[i].ilog10() + 1;
+                        sum *= 10_u64.pow(digits);
+                        sum += self.values[i];
                     }
                     _ => todo!(),
                 }
