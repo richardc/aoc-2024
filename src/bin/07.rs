@@ -3,6 +3,14 @@ advent_of_code::solution!(7);
 use itertools::Itertools;
 type Value = u64;
 
+#[allow(dead_code)] // Actually used in has_solution_3
+#[derive(Clone)]
+enum Operation {
+    Multiply,
+    Add,
+    Concat,
+}
+
 #[derive(Debug)]
 struct Equation {
     target: Value,
@@ -43,20 +51,19 @@ impl Equation {
 
     fn has_solution_3(&self) -> bool {
         for operations in (1..(self.values.len()))
-            .map(|_| [1, 2, 3])
+            .map(|_| [Operation::Add, Operation::Multiply, Operation::Concat])
             .multi_cartesian_product()
         {
             let mut sum: Value = *self.values.first().unwrap();
             for i in 1..self.values.len() {
                 match operations[i - 1] {
-                    1 => sum += self.values[i],
-                    2 => sum *= self.values[i],
-                    3 => {
+                    Operation::Add => sum += self.values[i],
+                    Operation::Multiply => sum *= self.values[i],
+                    Operation::Concat => {
                         let digits = self.values[i].ilog10() + 1;
                         sum *= 10_u64.pow(digits);
                         sum += self.values[i];
                     }
-                    _ => todo!(),
                 }
             }
             if sum == self.target {
