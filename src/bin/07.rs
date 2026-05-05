@@ -1,5 +1,6 @@
 advent_of_code::solution!(7);
 
+use itertools::Itertools;
 type Value = u64;
 
 #[derive(Debug)]
@@ -39,6 +40,30 @@ impl Equation {
         }
         false
     }
+
+    fn has_solution_3(&self) -> bool {
+        for operations in (1..(self.values.len()))
+            .map(|_| [1, 2, 3])
+            .multi_cartesian_product()
+        {
+            let mut sum: Value = *self.values.first().unwrap();
+            for i in 1..self.values.len() {
+                match operations[i - 1] {
+                    1 => sum += self.values[i],
+                    2 => sum *= self.values[i],
+                    3 => {
+                        let new = format!("{}{}", sum, self.values[i]);
+                        sum = new.parse().unwrap()
+                    }
+                    _ => todo!(),
+                }
+            }
+            if sum == self.target {
+                return true;
+            }
+        }
+        false
+    }
 }
 
 #[derive(Debug)]
@@ -64,6 +89,19 @@ impl Puzzle {
             })
             .sum()
     }
+
+    fn part_two(&self) -> Value {
+        self.equations
+            .iter()
+            .filter_map(|e| {
+                if e.has_solution_3() {
+                    Some(e.target)
+                } else {
+                    None
+                }
+            })
+            .sum()
+    }
 }
 
 pub fn part_one(input: &str) -> Option<Value> {
@@ -71,8 +109,9 @@ pub fn part_one(input: &str) -> Option<Value> {
     Some(puzzle.part_one())
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
-    None
+pub fn part_two(input: &str) -> Option<Value> {
+    let puzzle = Puzzle::from_str(input);
+    Some(puzzle.part_two())
 }
 
 #[cfg(test)]
@@ -88,6 +127,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(11387));
     }
 }
