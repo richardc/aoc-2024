@@ -59,11 +59,33 @@ impl Equation {
                 match operations[i - 1] {
                     Operation::Add => sum += self.values[i],
                     Operation::Multiply => sum *= self.values[i],
-                    Operation::Concat => {
-                        let digits = self.values[i].ilog10() + 1;
-                        sum *= 10_u64.pow(digits);
-                        sum += self.values[i];
-                    }
+                    Operation::Concat => match self.values[i] {
+                        0..10 => {
+                            sum *= 10;
+                            sum += self.values[i];
+                        }
+                        10..100 => {
+                            sum *= 100;
+                            sum += self.values[i];
+                        }
+                        100..1000 => {
+                            sum *= 1000;
+                            sum += self.values[i];
+                        }
+                        1000..10000 => {
+                            sum *= 10000;
+                            sum += self.values[i];
+                        }
+                        10000..100000 => {
+                            sum *= 100000;
+                            sum += self.values[i];
+                        }
+                        _ => {
+                            let digits = self.values[i].ilog10() + 1;
+                            sum *= 10_u64.pow(digits);
+                            sum += self.values[i];
+                        }
+                    },
                 }
             }
             if sum == self.target {
