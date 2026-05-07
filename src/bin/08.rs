@@ -35,9 +35,11 @@ impl Puzzle {
         // determine the vector
         let vector = (end.0 - start.0, end.1 - start.1);
 
-        // antinode back past the start
-        let start_antinode = (start.0 - vector.0, start.1 - vector.0);
-        let end_antinode = (end.0 + vector.1, end.1 + vector.1);
+        // antinodes
+        // -- back past the start
+        let start_antinode = (start.0 - vector.0, start.1 - vector.1);
+        // -- out past the end
+        let end_antinode = (end.0 + vector.0, end.1 + vector.1);
         vec![start_antinode, end_antinode]
     }
 
@@ -53,7 +55,9 @@ impl Puzzle {
         let mut antinodes: HashSet<(usize, usize)> = HashSet::new();
         let groups = self.find_antennas();
         for (_group, nodes) in groups {
-            for (&a, &b) in nodes.iter().circular_tuple_windows() {
+            for pairs in nodes.iter().combinations(2) {
+                let a = *pairs[0];
+                let b = *pairs[1];
                 for antinode in self.antinodes_of(a, b) {
                     if self.in_bounds(antinode) {
                         antinodes.insert((antinode.0 as usize, antinode.1 as usize));
@@ -136,6 +140,20 @@ mod tests {
         ));
         let result = puzzle.find_antinodes();
         assert_eq!(result, HashSet::from([(1, 3), (2, 0), (6, 2), (7, 6)]));
+    }
+
+    use rstest::rstest;
+    #[rstest]
+    #[case(((3,4),(5,5)), vec![(1,3),(7,6)])]
+    fn test_antinodes_of(
+        #[case] (start, end): ((i32, i32), (i32, i32)),
+        #[case] expected: Vec<(i32, i32)>,
+    ) {
+        let puzzle = Puzzle::from_str(&advent_of_code::template::read_file_part(
+            "examples", DAY, 2,
+        ));
+        let result = puzzle.antinodes_of(start, end);
+        assert_eq!(expected, result);
     }
 
     #[test]
