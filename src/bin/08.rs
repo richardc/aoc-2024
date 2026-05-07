@@ -5,6 +5,42 @@ use pathfinding::matrix::Matrix;
 
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::ops::Add;
+use std::ops::Sub;
+
+#[derive(Debug, Eq, Hash, PartialEq, Clone, Copy, PartialOrd)]
+struct Vector {
+    row: i32,
+    col: i32,
+}
+
+impl Sub for Vector {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self::Output {
+        Self {
+            row: self.row - other.row,
+            col: self.col - other.col,
+        }
+    }
+}
+
+impl Add for Vector {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self::Output {
+        Self {
+            row: self.row + other.row,
+            col: self.col + other.col,
+        }
+    }
+}
+
+impl Vector {
+    fn from(row: i32, col: i32) -> Self {
+        Self { row, col }
+    }
+}
 
 struct Puzzle {
     map: Matrix<u8>,
@@ -16,43 +52,43 @@ impl Puzzle {
         Self { map }
     }
 
-    fn find_antennas(&self) -> HashMap<u8, Vec<(i32, i32)>> {
+    fn find_antennas(&self) -> HashMap<u8, Vec<Vector>> {
         self.map
             .items()
             .filter(|((_, _), &c)| c.is_ascii_alphanumeric())
-            .map(|((r, c), &v)| (v, (r as i32, c as i32)))
+            .map(|((r, c), &v)| (v, Vector::from(r as i32, c as i32)))
             .into_group_map()
     }
 
-    fn antinodes_of(&self, start: (i32, i32), end: (i32, i32)) -> Vec<(i32, i32)> {
+    fn antinodes_of(&self, start: Vector, end: Vector) -> Vec<Vector> {
         // put the top one first
-        let (start, end) = if start.0 < end.0 || start.1 < end.1 {
+        let (start, end) = if start < end {
             (start, end)
         } else {
             (end, start)
         };
 
         // determine the vector
-        let vector = (end.0 - start.0, end.1 - start.1);
+        let vector = end - start;
 
         // antinodes
         // -- back past the start
-        let start_antinode = (start.0 - vector.0, start.1 - vector.1);
+        let start_antinode = start - vector;
         // -- out past the end
-        let end_antinode = (end.0 + vector.0, end.1 + vector.1);
+        let end_antinode = end + vector;
         vec![start_antinode, end_antinode]
     }
 
-    fn in_bounds(&self, (row, col): (i32, i32)) -> bool {
-        if row < 0 || col < 0 {
+    fn in_bounds(&self, v: Vector) -> bool {
+        if v.row < 0 || v.col < 0 {
             false
         } else {
-            self.map.within_bounds((row as usize, col as usize))
+            self.map.within_bounds((v.row as usize, v.col as usize))
         }
     }
 
-    fn find_antinodes(&self) -> HashSet<(usize, usize)> {
-        let mut antinodes: HashSet<(usize, usize)> = HashSet::new();
+    fn find_antinodes(&self) -> HashSet<Vector> {
+        let mut antinodes: HashSet<Vector> = HashSet::new();
         let groups = self.find_antennas();
         for (_group, nodes) in groups {
             for pairs in nodes.iter().combinations(2) {
@@ -60,7 +96,7 @@ impl Puzzle {
                 let b = *pairs[1];
                 for antinode in self.antinodes_of(a, b) {
                     if self.in_bounds(antinode) {
-                        antinodes.insert((antinode.0 as usize, antinode.1 as usize));
+                        antinodes.insert(antinode);
                     }
                 }
             }
@@ -101,7 +137,10 @@ mod tests {
             "examples", DAY, 1,
         ));
         let result = puzzle.find_antennas();
-        assert_eq!(result, HashMap::from([(b'a', vec![(3, 4), (5, 5)])]));
+        assert_eq!(
+            result,
+            HashMap::from([(b'a', vec![Vector::from(3, 4), Vector::from(5, 5)])])
+        );
     }
 
     #[test]
@@ -110,7 +149,10 @@ mod tests {
             "examples", DAY, 1,
         ));
         let result = puzzle.find_antinodes();
-        assert_eq!(result, HashSet::from([(1, 3), (7, 6)]));
+        assert_eq!(
+            result,
+            HashSet::from([Vector::from(1, 3), Vector::from(7, 6)])
+        );
     }
 
     #[test]
@@ -129,7 +171,10 @@ mod tests {
         let result = puzzle.find_antennas();
         assert_eq!(
             result,
-            HashMap::from([(b'a', vec![(3, 4), (4, 8), (5, 5)])])
+            HashMap::from([(
+                b'a',
+                vec![Vector::from(3, 4), Vector::from(4, 8), Vector::from(5, 5)]
+            )])
         );
     }
 
@@ -139,16 +184,21 @@ mod tests {
             "examples", DAY, 2,
         ));
         let result = puzzle.find_antinodes();
-        assert_eq!(result, HashSet::from([(1, 3), (2, 0), (6, 2), (7, 6)]));
+        assert_eq!(
+            result,
+            HashSet::from([
+                Vector::from(1, 3),
+                Vector::from(2, 0),
+                Vector::from(6, 2),
+                Vector::from(7, 6)
+            ])
+        );
     }
 
     use rstest::rstest;
     #[rstest]
-    #[case(((3,4),(5,5)), vec![(1,3),(7,6)])]
-    fn test_antinodes_of(
-        #[case] (start, end): ((i32, i32), (i32, i32)),
-        #[case] expected: Vec<(i32, i32)>,
-    ) {
+    #[case((Vector::from(3,4), Vector::from(5,5)), vec![Vector::from(1,3), Vector::from(7,6)])]
+    fn test_antinodes_of(#[case] (start, end): (Vector, Vector), #[case] expected: Vec<Vector>) {
         let puzzle = Puzzle::from_str(&advent_of_code::template::read_file_part(
             "examples", DAY, 2,
         ));
