@@ -28,7 +28,7 @@ impl Puzzle {
         Self { disk_map }
     }
 
-    fn checksum(&self) -> usize {
+    fn compress_checksum(&self) -> usize {
         let mut map = self.disk_map.clone();
         let mut sum = 0;
         // The current file or gap we're filling in
@@ -84,15 +84,130 @@ impl Puzzle {
         }
         sum
     }
+
+    fn max_id(&self) -> usize {
+        if let Some(Map::File { id, .. }) = self.disk_map.back() {
+            *id
+        } else {
+            todo!()
+        }
+    }
+
+    fn defrag(&self) -> VecDeque<Map> {
+        let mut map = self.disk_map.clone();
+        for i in (1..=self.max_id()).rev() {
+            let file_index = map
+                .iter()
+                .rposition(|e| matches!(e, Map::File{id,..} if i == *id))
+                .unwrap();
+            let Map::File { length, .. } = map.get(file_index).unwrap() else {
+                panic!("was a file when we called rposition");
+            };
+            if let Some(gap_index) = map
+                .iter()
+                .position(|e| matches!(e, Map::Gap(size) if size >= length))
+                && gap_index < file_index
+            {
+                // remove file
+                let file = map.remove(file_index);
+                let Some(Map::File { length, .. }) = file else {
+                    panic!("file should be there")
+                };
+
+                if let Some(Map::Gap(size)) = map.get_mut(gap_index) {
+                    // shrink existing gap
+                    *size -= length;
+                }
+                // reinsert file
+                map.insert(gap_index, file.expect("file"));
+
+                // fuse gaps from where the old file was
+                let right_size = if let Some(Map::Gap(right_size)) = map.get(file_index + 1) {
+                    Some(*right_size)
+                } else {
+                    None
+                };
+
+                if right_size.is_some() {
+                    map.remove(file_index + 1);
+                }
+
+                if let Some(Map::Gap(left_size)) = map.get_mut(file_index) {
+                    *left_size += length;
+                    *left_size += right_size.unwrap_or(0);
+                }
+
+                // Drop the last element if it's just an accumulating gap
+                map.pop_back_if(|e| matches!(e, Map::Gap(_)));
+
+                // self.draw_map(&map);
+            }
+        }
+
+        map
+    }
+
+    #[allow(dead_code)]
+    fn draw_map(&self, map: &VecDeque<Map>) {
+        let mut map = map.clone();
+        loop {
+            let head = map.pop_front();
+            match head {
+                Some(Map::File { id, length }) => {
+                    for _ in 0..length {
+                        if id < 10 {
+                            print!("{}", id);
+                        } else {
+                            print!("{} ", id);
+                        }
+                    }
+                }
+                Some(Map::Gap(size)) => {
+                    for _ in 0..size {
+                        print!(".");
+                    }
+                }
+                None => {
+                    println!();
+                    break;
+                }
+            }
+        }
+    }
+
+    fn defrag_checksum(&self) -> usize {
+        let mut map = self.defrag();
+        let mut sum: usize = 0;
+        let mut index = 0;
+        loop {
+            let head = map.pop_front();
+            match head {
+                Some(Map::File { id, length }) => {
+                    for _ in 0..length {
+                        sum += index * id;
+                        index += 1;
+                    }
+                }
+                Some(Map::Gap(length)) => {
+                    for _ in 0..length {
+                        index += 1;
+                    }
+                }
+                None => break,
+            }
+        }
+        sum
+    }
 }
 
 pub fn part_one(input: &str) -> Option<usize> {
     let puzzle = Puzzle::from_str(input);
-    Some(puzzle.checksum())
+    Some(puzzle.compress_checksum())
 }
 
-pub fn part_two(_input: &str) -> Option<u32> {
-    None
+pub fn part_two(input: &str) -> Option<usize> {
+    let puzzle = Puzzle::from_str(input);
+    Some(puzzle.defrag_checksum())
 }
 
 #[cfg(test)]
@@ -108,6 +223,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(2858));
     }
 }
