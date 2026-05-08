@@ -69,7 +69,7 @@ impl Puzzle {
     fn find_antennas(&self) -> HashMap<u8, Vec<Vector>> {
         self.map
             .items()
-            .filter(|((_, _), &c)| c.is_ascii_alphanumeric())
+            .filter(|((_, _), c)| c.is_ascii_alphanumeric())
             .map(|((r, c), &v)| (v, Vector::from(r as i32, c as i32)))
             .into_group_map()
     }
