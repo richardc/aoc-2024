@@ -122,8 +122,8 @@ impl Puzzle {
                 map.insert(gap_index, file.expect("file"));
 
                 // fuse gaps from where the old file was
-                let right_size = if let Some(Map::Gap(right_size)) = map.get(file_index + 1) {
-                    Some(*right_size)
+                let right_size = if let Some(Map::Gap(size)) = map.get(file_index + 1) {
+                    Some(*size)
                 } else {
                     None
                 };
