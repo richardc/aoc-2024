@@ -1,5 +1,8 @@
 advent_of_code::solution!(10);
-use pathfinding::{matrix::Matrix, prelude::dfs_reach};
+use pathfinding::{
+    matrix::Matrix,
+    prelude::{count_paths, dfs_reach},
+};
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 struct Location {
@@ -57,6 +60,21 @@ impl Puzzle {
             .map(|t| self.score_trailhead(t))
             .sum()
     }
+
+    fn rate_trailhead(&self, start: &Location) -> usize {
+        count_paths(
+            *start,
+            |node| self.neighbours(node),
+            |node| node.val == b'9',
+        )
+    }
+
+    fn rate_trailheads(&self) -> usize {
+        self.trailheads()
+            .iter()
+            .map(|t| self.rate_trailhead(t))
+            .sum()
+    }
 }
 
 pub fn part_one(input: &str) -> Option<usize> {
@@ -64,8 +82,9 @@ pub fn part_one(input: &str) -> Option<usize> {
     Some(puzzle.score_trailheads())
 }
 
-pub fn part_two(_input: &str) -> Option<u32> {
-    None
+pub fn part_two(input: &str) -> Option<usize> {
+    let puzzle = Puzzle::from_str(input);
+    Some(puzzle.rate_trailheads())
 }
 
 #[cfg(test)]
@@ -81,6 +100,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(81));
     }
 }
