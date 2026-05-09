@@ -1,10 +1,10 @@
-use std::iter;
-
 advent_of_code::solution!(11);
+
+use std::collections::HashMap;
 
 type Value = u64;
 struct Puzzle {
-    stones: Vec<Value>,
+    stones: HashMap<Value, Value>,
 }
 
 fn count_digits(v: Value) -> Value {
@@ -21,55 +21,61 @@ fn count_digits(v: Value) -> Value {
     }
 }
 
-fn step_stone(value: &Value) -> Box<dyn Iterator<Item = Value>> {
-    if *value == 0 {
-        return Box::new(iter::once(1));
-    }
-
-    let count = count_digits(*value);
-    if count % 2 == 0 {
-        let split = count / 2;
-
-        let left = value / 10_u64.pow(split as u32);
-        let right = value % 10_u64.pow(split as u32);
-        return Box::new(iter::chain(iter::once(left), iter::once(right)));
-    }
-
-    return Box::new(iter::once(*value * 2024));
-}
-
 impl Puzzle {
     fn from_str(input: &str) -> Self {
-        let stones = input
+        let mut stones = HashMap::new();
+        for stone in input
             .trim_ascii_end()
             .split(' ')
             .map(|v| v.parse().unwrap())
-            .collect();
+        {
+            *stones.entry(stone).or_insert(0) += 1;
+        }
         Self { stones }
     }
 
     fn step(&mut self) {
-        self.stones = self.stones.iter().flat_map(step_stone).collect()
+        let mut next = HashMap::new();
+        for (&value, &count) in &self.stones {
+            if value == 0 {
+                *next.entry(1).or_insert(0) += count;
+                continue;
+            }
+
+            let digits = count_digits(value);
+            if digits % 2 == 0 {
+                let split = digits / 2;
+                let left = value / 10_u64.pow(split as u32);
+                let right = value % 10_u64.pow(split as u32);
+                *next.entry(left).or_insert(0) += count;
+                *next.entry(right).or_insert(0) += count;
+                continue;
+            }
+
+            *next.entry(value * 2024).or_insert(0) += count;
+        }
+        self.stones = next;
     }
 
-    #[allow(dead_code)]
-    fn print(&self) {
-        self.stones.iter().for_each(|v| print!("{} ", v));
-        println!();
+    fn count_stones(&self) -> Value {
+        self.stones.values().sum()
     }
 }
 
-pub fn part_one(input: &str) -> Option<usize> {
+fn solve(count: usize, input: &str) -> Value {
     let mut puzzle = Puzzle::from_str(input);
-    for _ in 0..25 {
+    for _ in 0..count {
         puzzle.step();
-        // puzzle.print();
     }
-    Some(puzzle.stones.len())
+    puzzle.count_stones()
 }
 
-pub fn part_two(_input: &str) -> Option<u32> {
-    None
+pub fn part_one(input: &str) -> Option<Value> {
+    Some(solve(25, input))
+}
+
+pub fn part_two(input: &str) -> Option<Value> {
+    Some(solve(75, input))
 }
 
 #[cfg(test)]
@@ -80,11 +86,5 @@ mod tests {
     fn test_part_one() {
         let result = part_one(&advent_of_code::template::read_file("examples", DAY));
         assert_eq!(result, Some(55312));
-    }
-
-    #[test]
-    fn test_part_two() {
-        let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
     }
 }
