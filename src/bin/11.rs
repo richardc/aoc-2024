@@ -43,7 +43,7 @@ impl Puzzle {
             }
 
             let digits = count_digits(value);
-            if digits % 2 == 0 {
+            if digits.is_multiple_of(2) {
                 let split = digits / 2;
                 let left = value / 10_u64.pow(split as u32);
                 let right = value % 10_u64.pow(split as u32);
