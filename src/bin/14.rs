@@ -1,10 +1,13 @@
 advent_of_code::solution!(14);
 
-use std::{collections::HashMap, ops::Add};
+use std::{
+    collections::{HashMap, HashSet},
+    ops::Add,
+};
 
 type Value = i64;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 struct Vector {
     x: Value,
     y: Value,
@@ -36,6 +39,13 @@ impl Vector {
         let x = x.parse().unwrap();
         let y = y.parse().unwrap();
         Self { x, y }
+    }
+
+    fn wrap(&self, width: Value, height: Value) -> Self {
+        Self {
+            x: self.x.rem_euclid(width),
+            y: self.y.rem_euclid(height),
+        }
     }
 }
 
@@ -76,19 +86,67 @@ impl Puzzle {
         let mid_width = self.width / 2;
         let mid_height = self.height / 2;
         let mut quadrants: HashMap<(bool, bool), Value> = HashMap::new();
-        for location in self.robots.iter().map(|r| r.position + r.vector.scale(100)) {
-            let normalised_x = location.x.rem_euclid(self.width);
-            let normalised_y = location.y.rem_euclid(self.height);
-
+        for location in self
+            .robots
+            .iter()
+            .map(|r| (r.position + r.vector.scale(100)).wrap(self.width, self.height))
+        {
             // skip bots that are in the deadzone
-            if normalised_x == mid_width || normalised_y == mid_height {
+            if location.x == mid_width || location.y == mid_height {
                 continue;
             }
-            let quadrant = (normalised_x < mid_width, normalised_y < mid_height);
+            let quadrant = (location.x < mid_width, location.y < mid_height);
             *quadrants.entry(quadrant).or_insert(0) += 1;
         }
 
         quadrants.values().product()
+    }
+
+    fn has_vertical_group(&self, points: &HashSet<Vector>) -> bool {
+        let mut count = 0;
+        for x in 0..self.width {
+            for y in 0..self.height {
+                if points.contains(&Vector { x, y }) {
+                    count += 1;
+                } else {
+                    count = 0
+                }
+                if count >= 10 {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    #[allow(dead_code)]
+    fn draw(&self, points: &HashSet<Vector>) {
+        for y in 0..self.height {
+            for x in 0..self.width {
+                if points.contains(&Vector { x, y }) {
+                    print!("#");
+                } else {
+                    print!(" ");
+                }
+            }
+            println!();
+        }
+    }
+
+    fn find_tree(&self) -> Option<Value> {
+        for time in 1.. {
+            let points = self
+                .robots
+                .iter()
+                .map(|r| (r.position + r.vector.scale(time)).wrap(self.width, self.height))
+                .collect::<HashSet<Vector>>();
+
+            if self.has_vertical_group(&points) {
+                //self.draw(&points);
+                return Some(time);
+            }
+        }
+        None
     }
 }
 
@@ -97,8 +155,9 @@ pub fn part_one(input: &str) -> Option<Value> {
     Some(puzzle.safety_factor())
 }
 
-pub fn part_two(_input: &str) -> Option<u32> {
-    None
+pub fn part_two(input: &str) -> Option<Value> {
+    let puzzle = Puzzle::from_str(input);
+    puzzle.find_tree()
 }
 
 #[cfg(test)]
