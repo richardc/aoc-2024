@@ -22,11 +22,11 @@ impl Puzzle {
                 continue;
             }
             let value = self.map.get(start);
-            let region = self
+            let mut region = self
                 .map
                 .bfs_reachable(start, false, |pos| self.map.get(pos) == value);
             regions.push(region.clone());
-            seen.append(&mut region.clone());
+            seen.append(&mut region);
         }
         regions
     }
