@@ -104,8 +104,8 @@ impl Puzzle {
 
     fn has_vertical_group(&self, points: &HashSet<Vector>) -> bool {
         let mut count = 0;
-        for x in 0..self.width {
-            for y in 0..self.height {
+        for x in 0..self.width / 2 {
+            for y in 0..self.height / 2 {
                 if points.contains(&Vector { x, y }) {
                     count += 1;
                 } else {
@@ -142,7 +142,7 @@ impl Puzzle {
                 .collect::<HashSet<Vector>>();
 
             if self.has_vertical_group(&points) {
-                //self.draw(&points);
+                self.draw(&points);
                 return Some(time);
             }
         }
