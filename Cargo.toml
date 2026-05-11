@@ -24,12 +24,10 @@ test_lib = []
 # Template dependencies
 chrono = { version = "0.4.38", optional = true }
 dhat = { version = "0.3.3", optional = true }
-good_lp = "1.15.1"
-itertools = "0.13.0"
-pathfinding = "4.14.0"
 pico-args = "0.5.0"
-rstest = "0.26.1"
 tinyjson = "2.5.1"
-winnow = "0.6.20"
 
 # Solution dependencies
+itertools = "0.13.0"
+pathfinding = "4.14.0"
+rstest = "0.26.1"

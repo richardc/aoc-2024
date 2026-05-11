@@ -1,5 +1,3 @@
-use good_lp::{Solution, SolverModel, constraint, default_solver, variables};
-
 advent_of_code::solution!(13);
 
 #[derive(Debug, Default)]
@@ -45,31 +43,7 @@ impl Machine {
     }
 
     fn fewest_tokens(&self) -> Option<usize> {
-        variables! {
-            vars:
-            a (integer) <= 100;
-            b (integer) <= 100;
-            ax (integer);
-            ay (integer);
-            bx (integer);
-            by (integer);
-        };
-
-        if let Ok(solution) = vars
-            .minimise(a * 3 + b)
-            .using(default_solver)
-            .with(constraint!(ax == a * self.a.0))
-            .with(constraint!(ay == a * self.a.1))
-            .with(constraint!(bx == b * self.b.0))
-            .with(constraint!(by == b * self.b.1))
-            .with(constraint!(ax + bx == self.prize.0))
-            .with(constraint!(ay + by == self.prize.1))
-            .solve()
-        {
-            Some((solution.value(a) * 3.0 + solution.value(b)) as usize)
-        } else {
-            None
-        }
+        None
     }
 }
 
@@ -94,7 +68,7 @@ pub fn part_one(input: &str) -> Option<usize> {
     Some(puzzle.fewest_tokens())
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
+pub fn part_two(_input: &str) -> Option<u32> {
     None
 }
 
