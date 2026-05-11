@@ -13,14 +13,6 @@ impl Puzzle {
         Self { map }
     }
 
-    fn neighbours(&self, pos: (usize, usize)) -> Vec<(usize, usize)> {
-        let value = self.map.get(pos);
-        self.map
-            .neighbours(pos, false)
-            .filter(|npos| self.map.get(*npos) == value)
-            .collect()
-    }
-
     fn regions(&self) -> Vec<BTreeSet<(usize, usize)>> {
         let mut seen = BTreeSet::new();
         let mut regions = Vec::new();
@@ -40,7 +32,15 @@ impl Puzzle {
     }
 
     fn perimeter(&self, region: &BTreeSet<(usize, usize)>) -> usize {
-        let shared_edges: usize = region.iter().map(|pos| self.neighbours(*pos).len()).sum();
+        let shared_edges: usize = region
+            .iter()
+            .map(|pos| {
+                self.map
+                    .neighbours(*pos, false)
+                    .filter(|n| region.contains(n))
+                    .count()
+            })
+            .sum();
         (region.len() * 4) - shared_edges
     }
 
