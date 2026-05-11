@@ -64,7 +64,7 @@ struct Puzzle {
 
 impl Puzzle {
     fn from_str(input: &str) -> Self {
-        let machines = input.split("\n\n").map(|m| Machine::from_str(m)).collect();
+        let machines = input.split("\n\n").map(Machine::from_str).collect();
         Self { machines }
     }
 
