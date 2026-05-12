@@ -13,26 +13,6 @@ struct Vector {
     y: Value,
 }
 
-impl Add for Vector {
-    type Output = Self;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        Self {
-            x: self.x + rhs.x,
-            y: self.y + rhs.y,
-        }
-    }
-}
-
-impl Vector {
-    fn scale(self, rhs: Value) -> Self {
-        Self {
-            x: self.x * rhs,
-            y: self.y * rhs,
-        }
-    }
-}
-
 impl Vector {
     fn from_str(input: &str) -> Self {
         let (x, y) = input.split_once(',').unwrap();
@@ -41,10 +21,28 @@ impl Vector {
         Self { x, y }
     }
 
+    fn scale(self, rhs: Value) -> Self {
+        Self {
+            x: self.x * rhs,
+            y: self.y * rhs,
+        }
+    }
+
     fn wrap(&self, width: Value, height: Value) -> Self {
         Self {
             x: self.x.rem_euclid(width),
             y: self.y.rem_euclid(height),
+        }
+    }
+}
+
+impl Add for Vector {
+    type Output = Self;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Self {
+            x: self.x + rhs.x,
+            y: self.y + rhs.y,
         }
     }
 }
